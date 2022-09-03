@@ -80,19 +80,69 @@ ORDER BY AVG(a.salary)
 
 -- 7. Localize todos os funcionários que não são supervisores.
 -- a. Primeiramente, faça isto usando o operador NOT EXISTS.
+
+select e.last_name 
+from employees e
+where not exists (select 'x'
+                           from employees i
+                           where i.manager_id = e.employee_id)
+
 -- b. Isso pode ser feito com o operador NOT IN? Como ou por que não?
+
+select e.last_name 
+from employees e
+where e.employee_id not in (select i.manager_id
+                           from employees i)
+
+Não. A querry acima não retorna valores
 -- 8. Crie uma consulta para exibir o sobrenome dos funcionários quem ganham menos
 -- que o salário médio em seus respectivos departamentos.
+
+select e.last_name 
+from employees e
+where e.salary <  (select avg(i.salary)
+                           from employees i
+                           where i.department_id = e.department_id)
 
 -- 9. Crie uma consulta para exibir os sobrenomes dos funcionários que têm um ou mais
 -- colegas de trabalho nos respectivos departamentos com datas de admissão
 -- posteriores, mas com salários mais altos.
+
+select e.last_name 
+from employees e
+where exists  (select 'X' 
+                           from employees i
+                           where i.department_id = e.department_id
+                           and i.hire_date > e.hire_date
+                           and i.salary > e.salary)
 
 -- 10. Crie uma consulta para exibir o ID, os sobrenomes e os nomes de departamento de
 -- todos os funcionários.
 -- Observação: Use uma subconsulta escalar para recuperar o nome do departamento
 -- na instrução SELECT.
 
+SELECT employee_id, last_name,
+(SELECT department_name
+FROM departments d
+WHERE e.department_id =
+d.department_id ) department
+FROM employees e
+ORDER BY department
+
 -- 11. Crie uma consulta para exibir o nome dos departamentos cujos totais de salários
 -- sejam superiores a 1/8 do total de salários de toda a empresa. Use a cláusula WITH
 -- para criar essa consulta. Nomeie a consulta como SUMMARY.
+
+WITH
+summary AS (
+SELECT department_name, SUM(salary) as salarios
+FROM employees e, departments d
+WHERE e.department_id =
+d.department_id
+GROUP BY department_name)
+SELECT department_name, salarios
+FROM summary
+WHERE salarios > (
+SELECT SUM(salarios) * 1/8
+FROM summary)
+ORDER BY salarios DESC
